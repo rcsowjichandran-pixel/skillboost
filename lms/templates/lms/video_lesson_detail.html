@@ -1,0 +1,65 @@
+{% extends "lms/base.html" %}
+
+{% block title %}{{ lesson.title }} | SkillBoost LMS{% endblock %}
+
+{% block body_class %}page-lesson{% endblock %}
+
+{% block content %}
+    <section class="lesson-heading">
+        <p class="eyebrow"><a href="{% url 'lms:course_detail' lesson.course_id %}">{{ lesson.course.title }}</a> · LESSON</p>
+        <h1>{{ lesson.title }}</h1>
+        <p>{{ lesson.description }}</p>
+        {% if video_is_direct %}
+            <div class="lesson-video" id="lesson-video">
+                <video controls preload="metadata" playsinline aria-label="{{ lesson.title }}">
+                    <source src="{{ lesson.video_url }}">
+                    Your browser cannot play this video.
+                    <a href="{{ lesson.video_url }}">Open the video</a>
+                </video>
+            </div>
+        {% else %}
+            <div class="video-external">
+                <p>This link opens the video on its hosting site. Playback may not be trackable here.</p>
+                <a class="button button-quiet" href="{{ lesson.video_url }}" target="_blank" rel="noopener noreferrer">▶ Open video source</a>
+            </div>
+        {% endif %}
+        <div class="lesson-actions">
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'lms:generate_quiz' lesson.pk %}" id="generate-quiz">
+                    {% csrf_token %}
+                    <button type="submit">✳ Generate a quiz</button>
+                </form>
+            {% else %}
+                <a class="button" id="generate-quiz" href="{% url 'login' %}?next={% url 'lms:lesson_detail' lesson.pk %}">Sign in to generate a quiz</a>
+            {% endif %}
+        </div>
+        <p id="video-complete" class="video-complete" role="status" hidden>Video complete. You can generate your quiz now.</p>
+    </section>
+    <div class="section-heading">
+        <div>
+            <p class="section-kicker">CHECK YOUR UNDERSTANDING</p>
+            <h2>Lesson quizzes</h2>
+        </div>
+    </div>
+    <ul class="quiz-list">
+        {% for quiz in quizzes %}
+            <li><a href="{% url 'lms:quiz_take' quiz.pk %}">{{ quiz.title }}</a></li>
+        {% empty %}
+            <li class="empty-state">No quizzes yet. Generate one to practice what you learned.</li>
+        {% endfor %}
+    </ul>
+    <script>
+        const generateQuiz = document.querySelector("#generate-quiz");
+        const videoComplete = document.querySelector("#video-complete");
+        const lessonVideo = document.querySelector("#lesson-video video");
+
+        if (lessonVideo) {
+            lessonVideo.addEventListener("ended", () => {
+                document.querySelector("#lesson-video").hidden = true;
+                videoComplete.hidden = false;
+                generateQuiz.focus();
+                generateQuiz.scrollIntoView({ behavior: "smooth", block: "center" });
+            });
+        }
+    </script>
+{% endblock %}

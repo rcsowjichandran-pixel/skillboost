@@ -1,0 +1,32 @@
+{% extends "lms/base.html" %}
+
+{% block title %}{{ quiz.title }} | SkillBoost LMS{% endblock %}
+
+{% block body_class %}page-quiz{% endblock %}
+
+{% block content %}
+    <section class="content-panel">
+        <p class="eyebrow">A MOMENT TO PRACTICE</p>
+        <h1>{{ quiz.title }}</h1>
+        <p>Choose the best answer for each question. You’ve got this.</p>
+        <form method="post" action="{% url 'lms:quiz_submit' quiz.pk %}">
+            {% csrf_token %}
+            {% for question in quiz.questions.all %}
+                <fieldset class="question-card">
+                    <legend>{{ forloop.counter }}. {{ question.question_text }}</legend>
+                    {% for answer in question.answers.all %}
+                        <label class="answer-option">
+                            <input type="radio" name="{{ question.pk }}" value="{{ answer.pk }}">
+                            {{ answer.answer_text }}
+                        </label>
+                    {% endfor %}
+                </fieldset>
+            {% empty %}
+                <div class="empty-state">This quiz does not contain any questions yet.</div>
+            {% endfor %}
+            {% if quiz.questions.exists %}
+                <button type="submit">Submit answers <span aria-hidden="true">→</span></button>
+            {% endif %}
+        </form>
+    </section>
+{% endblock %}

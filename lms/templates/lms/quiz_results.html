@@ -1,0 +1,41 @@
+{% extends "lms/base.html" %}
+
+{% block title %}Quiz results | SkillBoost LMS{% endblock %}
+
+{% block body_class %}page-quiz-results{% endblock %}
+
+{% block content %}
+    <section class="content-panel">
+        <p class="eyebrow">A STEP FORWARD</p>
+        <h1>Quiz results</h1>
+        <p>{{ attempt.quiz.title }}</p>
+        <div class="score-panel">
+            <span class="score-value">{{ attempt.score }}%</span>
+            <div>
+                {% if attempt.score >= 80 %}
+                    <strong>You passed — great work!</strong>
+                    <p>Your course progress has been updated.</p>
+                {% else %}
+                    <strong>Keep practicing. You’re getting there.</strong>
+                    <p>You need at least 80% to complete the course.</p>
+                {% endif %}
+                <small>{{ attempt.correct_answers }} of {{ attempt.total_questions }} correct</small>
+            </div>
+        </div>
+        <h2>Answer review</h2>
+        <ol class="result-list">
+            {% for result in attempt.answer_results %}
+                <li>
+                    <strong>{{ result.question }}</strong>
+                    <p>Your answer: {{ result.selected_answer|default:"No answer selected" }}</p>
+                    {% if result.is_correct %}
+                        <span class="status-pill">Correct</span>
+                    {% else %}
+                        <p>Correct answer{{ result.correct_answers|pluralize }}: {{ result.correct_answers|join:", " }}</p>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+        <a class="button" href="{% url 'lms:course_detail' attempt.quiz.course_id %}">Back to course <span aria-hidden="true">→</span></a>
+    </section>
+{% endblock %}

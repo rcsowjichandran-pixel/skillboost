@@ -1,0 +1,48 @@
+{% extends "lms/base.html" %}
+
+{% block title %}{{ course.title }} | SkillBoost LMS{% endblock %}
+
+{% block body_class %}page-course-detail{% endblock %}
+
+{% block content %}
+    <section class="course-overview">
+        <p class="eyebrow">YOUR LEARNING PATH</p>
+        <h1>{{ course.title }}</h1>
+        <p>{{ course.description }}</p>
+        <div class="course-actions">
+            {% if user.is_staff %}
+                <a class="button" href="{% url 'lms:video_lesson_upload' course.pk %}">＋ Add a lesson</a>
+            {% endif %}
+            <a class="button button-quiet" href="{% url 'lms:course_catalog' %}">Browse courses</a>
+        </div>
+    </section>
+    {% if is_completed %}
+        <div class="completion-banner">
+            <div>
+                <strong>✓ Course completed — wonderful work!</strong>
+                <p>Your certificate is ready{% if user.get_full_name %}, {{ user.get_full_name }}{% endif %}.</p>
+            </div>
+            <a class="button certificate-button" href="{% url 'lms:generate_certificate' course.pk user.pk %}">Download certificate <span aria-hidden="true">✦</span></a>
+        </div>
+    {% endif %}
+    <div class="section-heading">
+        <div>
+            <p class="section-kicker">ONE LESSON AT A TIME</p>
+            <h2>Course lessons</h2>
+            <p>Pick up where you left off or start at the beginning.</p>
+        </div>
+        <span class="status-pill">{{ lessons|length }} lesson{{ lessons|length|pluralize }}</span>
+    </div>
+    {% if lessons %}
+        <ol class="lesson-list">
+            {% for lesson in lessons %}
+                <li class="lesson-row">
+                    <span class="lesson-number">{{ forloop.counter|stringformat:"02d" }}</span>
+                    <a href="{% url 'lms:lesson_detail' lesson.pk %}">{{ lesson.title }}<small>Video lesson · Learn at your own pace</small></a>
+                </li>
+            {% endfor %}
+        </ol>
+    {% else %}
+        <div class="empty-state"><strong>Your first lesson goes here.</strong><p>Add a video lesson to get this course started.</p></div>
+    {% endif %}
+{% endblock %}

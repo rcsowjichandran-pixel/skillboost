@@ -1,0 +1,18 @@
+{% extends "lms/base.html" %}
+
+{% block title %}Create a course | SkillBoost LMS{% endblock %}
+
+{% block body_class %}page-course-create{% endblock %}
+
+{% block content %}
+    <section class="content-panel form-panel">
+        <p class="eyebrow">SHARE WHAT YOU KNOW</p>
+        <h1>Create a course</h1>
+        <p>Give learners a clear starting point and a reason to keep going.</p>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Create course <span aria-hidden="true">→</span></button>
+        </form>
+    </section>
+{% endblock %}

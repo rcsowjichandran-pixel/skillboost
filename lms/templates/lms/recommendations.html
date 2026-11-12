@@ -1,0 +1,48 @@
+{% extends "lms/base.html" %}
+
+{% block title %}Recommended for You | SkillBoost LMS{% endblock %}
+
+{% block body_class %}page-recommendations{% endblock %}
+
+{% block content %}
+    <section class="hero">
+        <div>
+            <p class="eyebrow">YOUR NEXT CHAPTER STARTS HERE</p>
+            <h1>Learn at your pace.<br>Grow on your terms.</h1>
+            <p>Thoughtful picks for where you want to go next, powered by your learning journey.</p>
+        </div>
+        <div class="hero-art" aria-hidden="true">✳</div>
+    </section>
+    <div class="section-heading">
+        <div>
+            <p class="section-kicker">A LITTLE INSPIRATION</p>
+            <h2>Recommended for you</h2>
+            <p>Curated around what you’ve learned so far.</p>
+        </div>
+        {% if user.is_staff %}
+            <a class="button button-quiet" href="{% url 'lms:course_upload' %}">＋ Create a course</a>
+        {% endif %}
+    </div>
+    {% if no_available_courses %}
+        <div class="empty-state"><strong>Your learning library is ready to grow.</strong><p>There are no courses available to recommend yet. Add a course and check back.</p></div>
+    {% elif recommendations %}
+        <div class="course-grid">
+            {% for recommendation in recommendations %}
+                <article class="course-card">
+                    <div class="course-card-art">
+                        <span>{{ forloop.counter|stringformat:"02d" }}</span>
+                        <span class="relevance-pill">{{ recommendation.relevance_score|floatformat:2 }} match</span>
+                    </div>
+                    <div class="course-card-content">
+                        <p class="section-kicker">PICKED FOR YOUR JOURNEY</p>
+                        <h2><a href="{% url 'lms:course_detail' recommendation.course.pk %}">{{ recommendation.title }}</a></h2>
+                        <p>{{ recommendation.description }}</p>
+                        <a class="text-link" href="{% url 'lms:course_detail' recommendation.course.pk %}">Explore course</a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state"><strong>Your next great course is just around the corner.</strong><p>No matching recommendations are available right now. Please try again later.</p></div>
+    {% endif %}
+{% endblock %}

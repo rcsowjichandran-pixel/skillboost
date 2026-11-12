@@ -1,0 +1,18 @@
+{% extends "lms/base.html" %}
+
+{% block title %}Add a lesson | SkillBoost LMS{% endblock %}
+
+{% block body_class %}page-lesson-create{% endblock %}
+
+{% block content %}
+    <section class="content-panel form-panel">
+        <p class="eyebrow">COURSE · {{ course.title }}</p>
+        <h1>Add a video lesson</h1>
+        <p>Break the topic into a focused, easy-to-follow lesson.</p>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Add lesson <span aria-hidden="true">→</span></button>
+        </form>
+    </section>
+{% endblock %}

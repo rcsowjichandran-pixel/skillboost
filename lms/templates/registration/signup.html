@@ -1,0 +1,20 @@
+{% extends "lms/base.html" %}
+
+{% block title %}Create account | SkillBoost LMS{% endblock %}
+
+{% block body_class %}page-signup{% endblock %}
+
+{% block content %}
+    <section class="content-panel form-panel auth-panel">
+        <p class="eyebrow">YOUR LEARNING JOURNEY STARTS HERE</p>
+        <h1>Create your learner account</h1>
+        <p>Sign up to take quizzes, track progress, and earn certificates in your name.</p>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit">Create account <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="auth-switch">Already have an account? <a href="{% url 'login' %}?next={{ next|urlencode }}">Log in</a></p>
+    </section>
+{% endblock %}

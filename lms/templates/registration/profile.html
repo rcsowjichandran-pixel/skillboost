@@ -1,0 +1,19 @@
+{% extends "lms/base.html" %}
+
+{% block title %}My profile | SkillBoost LMS{% endblock %}
+
+{% block body_class %}page-profile{% endblock %}
+
+{% block content %}
+    <section class="content-panel form-panel auth-panel">
+        <p class="eyebrow">YOUR SKILLBOOST ACCOUNT</p>
+        <h1>My profile</h1>
+        <p>Use your full name as you want it to appear on course certificates.</p>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit">Save profile <span aria-hidden="true">→</span></button>
+        </form>
+    </section>
+{% endblock %}

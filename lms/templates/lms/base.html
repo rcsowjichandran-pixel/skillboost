@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% load static %}
+    <title>{% block title %}SkillBoost LMS{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'lms/css/site.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <div class="site-shell">
+        <header class="site-header">
+            <a class="brand" href="{% url 'lms:course_catalog' %}" aria-label="SkillBoost home">
+                <span class="brand-mark" aria-hidden="true">S</span>
+                <span class="brand-copy">skill<span>boost</span><small>LEARN SOMETHING GREAT</small></span>
+            </a>
+            <nav class="main-nav" aria-label="Main navigation">
+                {% if user.is_staff %}
+                    <a class="nav-link {% if request.resolver_match.url_name == 'course_upload' %}is-active{% endif %}" href="{% url 'lms:course_upload' %}">Create a course</a>
+                    <a class="nav-link nav-admin" href="{% url 'admin:index' %}">Admin</a>
+                {% endif %}
+                <a class="nav-link {% if request.resolver_match.url_name == 'course_catalog' %}is-active{% endif %}" href="{% url 'lms:course_catalog' %}">Courses</a>
+                {% if user.is_authenticated %}
+                    <a class="nav-link {% if request.resolver_match.url_name == 'recommend_courses' %}is-active{% endif %}" href="{% url 'lms:recommend_courses' %}">For you</a>
+                {% endif %}
+            </nav>
+            <div class="header-actions">
+                {% if user.is_authenticated %}
+                    <span class="user-chip"><span class="user-avatar">{{ user.get_username|first|upper }}</span><span class="user-name">{{ user.get_full_name|default:user.get_username }}</span></span>
+                    <a class="nav-link" href="{% url 'lms:learner_profile' %}">My profile</a>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button class="button button-quiet button-small" type="submit">Log out</button>
+                    </form>
+                {% else %}
+                    <a class="button button-quiet button-small" href="{% url 'login' %}">Log in</a>
+                    <a class="button button-small" href="{% url 'lms:learner_signup' %}">Sign up</a>
+                {% endif %}
+            </div>
+        </header>
+        {% if messages %}
+            <div class="message-stack" aria-live="polite">
+                {% for message in messages %}
+                    <div class="notice notice-{{ message.tags|default:'info' }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <main class="page-content">{% block content %}{% endblock %}</main>
+        <footer class="site-footer">
+            <a class="footer-brand" href="{% url 'lms:course_catalog' %}">skillboost</a>
+            <span>Small steps. Big progress.</span>
+        </footer>
+    </div>
+</body>
+</html>
