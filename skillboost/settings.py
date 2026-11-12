@@ -11,7 +11,7 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "false").lower() == "true"
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
     raise ImproperlyConfigured("Set DJANGO_SECRET_KEY in the environment.")
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,https://skillboost-nq12.onrender.com/").split(",")
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,skillboost-nq12.onrender.com").split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
