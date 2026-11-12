@@ -2,7 +2,7 @@ import asyncio
 import json
 from datetime import timedelta
 from unittest.mock import AsyncMock, patch
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -551,11 +551,38 @@ class QuizFlowTests(TestCase):
         self.assertEqual(activity["recent_quiz_results"][0]["score"], 50)
 
     @patch.dict("os.environ", {"GEMINI_API_KEY": ""})
-    def test_recommendation_dashboard_reports_missing_api_key(self):
+    def test_recommendation_dashboard_shows_courses_without_api_key(self):
+        available_course = Course.objects.create(
+            title="Available Python", description="Learn more Python."
+        )
+
         response = self.client.get(reverse("lms:recommend_courses"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "require GEMINI_API_KEY")
+        self.assertContains(response, "Set GEMINI_API_KEY")
+        self.assertContains(response, available_course.title)
+        self.assertContains(response, "Explore")
+
+    @patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"})
+    @patch(
+        "lms.views._request_gemini_recommendations",
+        new_callable=AsyncMock,
+        side_effect=URLError("Gemini unavailable"),
+    )
+    def test_recommendation_dashboard_shows_courses_when_gemini_fails(
+        self, generate_recommendations
+    ):
+        available_course = Course.objects.create(
+            title="Available Python", description="Learn more Python."
+        )
+
+        response = self.client.get(reverse("lms:recommend_courses"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "temporarily unavailable")
+        self.assertContains(response, available_course.title)
+        self.assertContains(response, "Explore")
+        generate_recommendations.assert_awaited_once()
 
     @patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"})
     @patch(
@@ -777,7 +804,7 @@ class ModelLifecycleTests(TestCase):
 
 class RecommendationApiTests(TestCase):
     @patch("lms.views.urlopen")
-    def test_recommendation_request_includes_grounding_schema_and_user_context(
+    def test_recommendation_request_includes_schema_and_user_context(
         self, mocked_urlopen
     ):
         mocked_urlopen.return_value.__enter__.return_value.read.return_value = (
@@ -800,7 +827,9 @@ class RecommendationApiTests(TestCase):
         self.assertIn(
             "/models/gemini-3.6-flash:generateContent", request.full_url
         )
-        self.assertEqual(payload["tools"], [{"google_search": {}}])
+        self.assertEqual(request.get_header("X-goog-api-key"), "test-api-key")
+        self.assertNotIn("key=", request.full_url)
+        self.assertNotIn("tools", payload)
         self.assertEqual(
             payload["generationConfig"]["responseSchema"]["items"]["required"],
             ["title", "description", "relevance_score"],

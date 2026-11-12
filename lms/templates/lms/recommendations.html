@@ -9,7 +9,7 @@
         <div>
             <p class="eyebrow">YOUR NEXT CHAPTER STARTS HERE</p>
             <h1>Learn at your pace.<br>Grow on your terms.</h1>
-            <p>Thoughtful picks for where you want to go next, powered by your learning journey.</p>
+            <p>Thoughtful picks for where you want to go next{% if recommendations.0.personalized %}, powered by your learning journey{% endif %}.</p>
         </div>
         <div class="hero-art" aria-hidden="true">✳</div>
     </section>
@@ -17,7 +17,11 @@
         <div>
             <p class="section-kicker">A LITTLE INSPIRATION</p>
             <h2>Recommended for you</h2>
-            <p>Curated around what you’ve learned so far.</p>
+            {% if recommendations.0.personalized %}
+                <p>Curated around what you’ve learned so far.</p>
+            {% else %}
+                <p>Explore courses available in the learning library.</p>
+            {% endif %}
         </div>
         {% if user.is_staff %}
             <a class="button button-quiet" href="{% url 'lms:course_upload' %}">＋ Create a course</a>
@@ -31,10 +35,10 @@
                 <article class="course-card">
                     <div class="course-card-art">
                         <span>{{ forloop.counter|stringformat:"02d" }}</span>
-                        <span class="relevance-pill">{{ recommendation.relevance_score|floatformat:2 }} match</span>
+                        <span class="relevance-pill">{% if recommendation.personalized %}{{ recommendation.relevance_score|floatformat:2 }} match{% else %}Explore{% endif %}</span>
                     </div>
                     <div class="course-card-content">
-                        <p class="section-kicker">PICKED FOR YOUR JOURNEY</p>
+                        <p class="section-kicker">{% if recommendation.personalized %}PICKED FOR YOUR JOURNEY{% else %}AVAILABLE COURSE{% endif %}</p>
                         <h2><a href="{% url 'lms:course_detail' recommendation.course.pk %}">{{ recommendation.title }}</a></h2>
                         <p>{{ recommendation.description }}</p>
                         <a class="text-link" href="{% url 'lms:course_detail' recommendation.course.pk %}">Explore course</a>

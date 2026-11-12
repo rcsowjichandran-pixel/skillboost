@@ -183,14 +183,6 @@ def recommend_courses(request):
         )
 
     api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        messages.error(request, "Course recommendations require GEMINI_API_KEY.")
-        return render(
-            request,
-            "lms/recommendations.html",
-            {"recommendations": [], "no_available_courses": False},
-        )
-
     activity = {
         "completed_courses": [
             {
@@ -217,50 +209,76 @@ def recommend_courses(request):
         {"title": course.title, "description": course.description}
         for course in courses
     ]
-    try:
-        response = async_to_sync(_request_gemini_recommendations)(
-            activity, catalog, api_key
-        )
-        generated = _extract_recommendations(response)
-    except (HTTPError, URLError, TimeoutError, UnicodeDecodeError, json.JSONDecodeError):
-        logger.exception("Gemini course recommendation request failed")
-        messages.error(request, "Course recommendations are temporarily unavailable.")
-        return render(
+    recommendations = []
+    if api_key:
+        try:
+            response = async_to_sync(_request_gemini_recommendations)(
+                activity, catalog, api_key
+            )
+            generated = _extract_recommendations(response)
+        except (
+            HTTPError,
+            URLError,
+            TimeoutError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ):
+            logger.exception("Gemini course recommendation request failed")
+            messages.warning(
+                request,
+                "Personalized recommendations are temporarily unavailable. "
+                "Showing available courses instead.",
+            )
+        except ValueError:
+            logger.exception("Gemini returned invalid course recommendations")
+            messages.warning(
+                request,
+                "Personalized recommendations could not be processed. "
+                "Showing available courses instead.",
+            )
+        else:
+            courses_by_title = {
+                course.title.strip().casefold(): course for course in courses
+            }
+            for recommendation in generated:
+                course = courses_by_title.get(
+                    recommendation["title"].strip().casefold()
+                )
+                if course:
+                    recommendations.append(
+                        {
+                            **recommendation,
+                            "course": course,
+                            "personalized": True,
+                        }
+                    )
+            recommendations.sort(
+                key=lambda item: item["relevance_score"], reverse=True
+            )
+            if not recommendations:
+                messages.warning(
+                    request,
+                    "No personalized recommendations matched the available courses. "
+                    "Showing available courses instead.",
+                )
+    else:
+        messages.warning(
             request,
-            "lms/recommendations.html",
-            {"recommendations": [], "no_available_courses": False},
-        )
-    except ValueError:
-        logger.exception("Gemini returned invalid course recommendations")
-        messages.error(request, "Course recommendations could not be processed.")
-        return render(
-            request,
-            "lms/recommendations.html",
-            {"recommendations": [], "no_available_courses": False},
+            "Set GEMINI_API_KEY to enable personalized recommendations. "
+            "Showing available courses instead.",
         )
 
-    courses_by_title = {course.title.strip().casefold(): course for course in courses}
-    recommendations = []
-    for recommendation in generated:
-        course = courses_by_title.get(recommendation["title"].strip().casefold())
-        if course:
-            recommendations.append(
-                {
-                    **recommendation,
-                    "course": course,
-                }
-            )
-        recommendations.sort(key=lambda item: item["relevance_score"], reverse=True)
-        if not recommendations:
-            recommendations = [
-        {
-            "title": course.title,
-            "description": course.description,
-            "relevance_score": 1.0,
-            "course": course,
-        }
-        for course in courses[:5]
-    ]
+    if not recommendations:
+        recommendations = [
+            {
+                "title": course.title,
+                "description": course.description,
+                "relevance_score": 0.0,
+                "course": course,
+                "personalized": False,
+            }
+            for course in courses[:5]
+        ]
     return render(
         request,
         "lms/recommendations.html",
@@ -541,8 +559,7 @@ async def _request_gemini_quiz(description, api_key):
 async def _request_gemini_recommendations(activity, catalog, api_key):
     endpoint = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
-        "gemini-3.6-flash:generateContent?"
-        + urlencode({"key": api_key})
+        "gemini-3.6-flash:generateContent"
     )
     schema = {
         "type": "ARRAY",
@@ -568,7 +585,6 @@ async def _request_gemini_recommendations(activity, catalog, api_key):
     )
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
-        "tools": [{"google_search": {}}],
         "generationConfig": {
             "responseMimeType": "application/json",
             "responseSchema": schema,
@@ -577,7 +593,10 @@ async def _request_gemini_recommendations(activity, catalog, api_key):
     request = Request(
         endpoint,
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key,
+        },
         method="POST",
     )
 
