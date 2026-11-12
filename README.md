@@ -93,7 +93,8 @@ For deployment, set `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=false`, and
 or proxy. `.env.example` documents environment variables; copy it to `.env` and replace
 the example values before running the application.
 
-Collect static files before deployment with `python manage.py collectstatic --noinput`.
+Apply migrations and collect static files before deployment with:
+`python manage.py migrate --noinput && python manage.py collectstatic --noinput`
 Gunicorn is included as the production WSGI server for Linux/macOS:
 
 ```sh

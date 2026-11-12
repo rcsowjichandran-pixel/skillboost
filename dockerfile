@@ -23,5 +23,5 @@ COPY . .
 # Expose Django port
 EXPOSE 8000
  
-# Collect static assets and start the production WSGI server.
-CMD ["sh", "-c", "python manage.py collectstatic --noinput && exec gunicorn skillboost.wsgi:application --bind 0.0.0.0:8000"]
+# Apply database migrations, collect static assets, and start the production WSGI server.
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py collectstatic --noinput && exec gunicorn skillboost.wsgi:application --bind 0.0.0.0:8000"]
