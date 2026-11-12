@@ -486,7 +486,7 @@ def generate_certificate(request, course_id, user_id):
 async def _request_gemini_quiz(description, api_key):
     endpoint = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
-        "gemini-2.0-flash:generateContent?"
+        "gemini-3.6-flash:generateContent?"
         + urlencode({"key": api_key})
     )
     schema = {
